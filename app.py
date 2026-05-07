@@ -150,7 +150,35 @@ def process_to_template():
             
         output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
         
+        # Deduplicate rows based on key fields to guarantee 100% unique output rows
+        total_before = len(all_mapped_rows)
+        unique_rows = []
+        seen_signatures = set()
+        for row in all_mapped_rows:
+            # Create a unique signature from key data fields
+            sig_fields = [
+                str(row.get("ORIGIN LOCATION", "")).strip().upper(),
+                str(row.get("DESTINATION LOCATION", "")).strip().upper(),
+                str(row.get("CHARGE", "")).strip().upper(),
+                str(row.get("PROVIDER", "")).strip().upper(),
+                str(row.get("START DATE", "")).strip(),
+                str(row.get("EXPIRATION DATE", "")).strip(),
+                str(row.get("20DRY", "")).strip(),
+                str(row.get("40DRY", "")).strip(),
+                str(row.get("40HDRY", "")).strip(),
+                str(row.get("45HDRY", "")).strip(),
+                str(row.get("REMARKS", "")).strip().upper(),
+            ]
+            signature = "|".join(sig_fields)
+            if signature not in seen_signatures:
+                seen_signatures.add(signature)
+                unique_rows.append(row)
+        
+        all_mapped_rows = unique_rows
+        print(f"DEBUG: Deduplicated rows. Kept {len(all_mapped_rows)} unique rows from total {total_before} rows.")
+        
         success = mapping_engine.write_to_template(all_mapped_rows, output_path)
+
         
         # Calculate system duration
         end_time = datetime.now()

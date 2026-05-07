@@ -5,6 +5,8 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
+
 from openpyxl.utils.cell import range_boundaries, column_index_from_string
 
 load_dotenv()
@@ -23,36 +25,55 @@ class DiscoveryEngine:
             workbook = openpyxl.load_workbook(file_path, data_only=True)
             results = {}
 
-            for sheet_name in workbook.sheetnames:
-                sheet = workbook[sheet_name]
-                
-                # 1. Map merged cells for consistent data extraction
-                merged_map = self._get_merged_cells_map(sheet)
-                
-                # 2. Extract structural data (with merged cells handled)
-                # We extract the full 3000 rows to Python memory
-                sheet_data = self._extract_sheet_data(sheet, merged_map)
-                
-                if not sheet_data:
-                    results[sheet_name] = {
+            def process_single_sheet(sheet_name):
+                try:
+                    sheet = workbook[sheet_name]
+                    
+                    # 1. Map merged cells for consistent data extraction
+                    merged_map = self._get_merged_cells_map(sheet)
+                    
+                    # 2. Extract structural data (with merged cells handled)
+                    sheet_data = self._extract_sheet_data(sheet, merged_map)
+                    
+                    if not sheet_data:
+                        return sheet_name, {
+                            "metadata": {},
+                            "tables": []
+                        }
+
+                    # We run these two independent AI calls concurrently inside each sheet worker!
+                    with ThreadPoolExecutor(max_workers=2) as inner_executor:
+                        meta_future = inner_executor.submit(self._get_sheet_metadata, sheet_name, sheet_data)
+                        table_future = inner_executor.submit(self._analyze_with_ai, sheet_name, sheet_data)
+                        
+                        sheet_metadata = meta_future.result()
+                        table_metadata = table_future.result()
+                    
+                    # 5. Populate full data programmatically
+                    tables = self._populate_table_data(table_metadata, sheet_data)
+                    
+                    return sheet_name, {
+                        "metadata": sheet_metadata,
+                        "tables": tables
+                    }
+                except Exception as sheet_err:
+                    print(f"Error processing sheet '{sheet_name}' in parallel: {sheet_err}")
+                    return sheet_name, {
                         "metadata": {},
                         "tables": []
                     }
-                    continue
 
-                # 3. Analyze global sheet metadata (Dates, Provider, etc.)
-                sheet_metadata = self._get_sheet_metadata(sheet_name, sheet_data)
-                
-                # 4. Analyze sheet structure using Gemini (Table Discovery)
-                table_metadata = self._analyze_with_ai(sheet_name, sheet_data)
-                
-                # 5. Populate full data programmatically
-                tables = self._populate_table_data(table_metadata, sheet_data)
-                
-                results[sheet_name] = {
-                    "metadata": sheet_metadata,
-                    "tables": tables
-                }
+            sheet_names = workbook.sheetnames
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = {executor.submit(process_single_sheet, name): name for name in sheet_names}
+                for future in futures:
+                    name = futures[future]
+                    try:
+                        name, data = future.result()
+                        results[name] = data
+                    except Exception as e:
+                        print(f"Error reading parallel discovery result for sheet {name}: {e}")
+                        results[name] = {"metadata": {}, "tables": []}
 
             return results
         except Exception as e:
