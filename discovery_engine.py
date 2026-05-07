@@ -9,9 +9,9 @@ from openpyxl.utils.cell import range_boundaries, column_index_from_string
 
 load_dotenv()
 
-# Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"), transport="rest")
 MODEL_NAME = "gemini-2.5-flash-lite"
+
 
 
 class DiscoveryEngine:

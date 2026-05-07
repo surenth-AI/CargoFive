@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"), transport="rest")
 MODEL_NAME = "gemini-2.5-flash-lite"
+
 
 
 class MappingEngine:
@@ -184,6 +184,8 @@ class MappingEngine:
         5. Strictly populate "START DATE" and "EXPIRATION DATE" in YYYY-MM-DD format using global metadata or table context.
         6. Strictly populate "PROVIDER" with the carrier/provider name.
         7. Format all pricing columns (20DRY, 40DRY, etc.) and Transit Time as INTEGERS.
+        8. CRITICAL LIST FORMATTING RULE: For any column containing multiple items or lists (such as INCLUDED CHARGES, REMARKS, or NOTES), always separate the values with a pipe "|" instead of a comma ",". For example, use "THC | SEC | BAF" instead of "THC, SEC, BAF".
+
         
         --- OUTPUT FORMAT ---
         Return ONLY a JSON array of objects. Each object MUST match these keys:
@@ -233,11 +235,20 @@ class MappingEngine:
         
         formatted_data = ""
         for row in data_rows[:80]:
-            formatted_data += " | ".join(str(cell) if cell is not None else "" for cell in row) + "\n"
+            clean_row = [str(cell).strip() if cell is not None else "" for cell in row]
+            while clean_row and clean_row[-1] == "":
+                clean_row.pop()
+            if any(cell != "" for cell in clean_row):
+                formatted_data += " | ".join(clean_row) + "\n"
 
         formatted_context = ""
         for row in context_rows:
-            formatted_context += " | ".join(str(cell) if cell != "" else "" for cell in row) + "\n"
+            clean_row = [str(cell).strip() if cell is not None else "" for cell in row]
+            while clean_row and clean_row[-1] == "":
+                clean_row.pop()
+            if any(cell != "" for cell in clean_row):
+                formatted_context += " | ".join(clean_row) + "\n"
+
 
         prompt = f"""
         You are a highly experienced Logistics Data Agent. Your task is to extract rate data from an Excel table and map it to our standard output format.
@@ -295,6 +306,7 @@ class MappingEngine:
         12. INCLUDED CHARGES: Identify any surcharges listed as "Included" in the rate or notes. Use pipe-delimited codes.
         13. NOTES: You MUST strictly write the original sheet name '{sheet_name}' in this field for every single row.
         14. NULL FIELDS: If a field is not found in the file, return null. DO NOT invent data.
+        15. CRITICAL LIST FORMATTING RULE: For any column containing multiple items or lists (such as INCLUDED CHARGES, REMARKS, or NOTES), always separate the values with a pipe "|" instead of a comma ",". For example, use "THC | SEC | BAF" instead of "THC, SEC, BAF".
 
         --- OUTPUT FORMAT ---
         Return ONLY a JSON array of objects. Each object MUST match these keys:
@@ -375,7 +387,7 @@ class MappingEngine:
                         if clean_header in cmap:
                             # Handle potential list values from AI (e.g., list of included charges)
                             if isinstance(value, list):
-                                value = ", ".join(map(str, value))
+                                value = " | ".join(map(str, value))
                             
                             # Ensure numeric values are actually numeric for Excel
                             if clean_header in ["20DRY", "40DRY", "40HDRY", "45HDRY", "40NOR", "20RF", "40HCRF", "45RF", "20OT", "40OT", "40HCOT", "20FR", "40FR", "40HCFR", "20TK", "40TK", "TRANSIT TIME"]:
