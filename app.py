@@ -8,7 +8,9 @@ from discovery_engine import discovery_engine
 from mapping_engine import mapping_engine
 from planner_engine import planner_engine
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor
 import db
+
 
 load_dotenv()
 
@@ -129,9 +131,15 @@ def process_to_template():
         schedule = plan.get('schedule', [])
         
         all_mapped_rows = []
-        for task in schedule:
-            mapped_rows = mapping_engine.process_task(task, workbook_data)
-            all_mapped_rows.extend(mapped_rows)
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = [executor.submit(mapping_engine.process_task, task, workbook_data) for task in schedule]
+            for future in futures:
+                try:
+                    mapped_rows = future.result()
+                    all_mapped_rows.extend(mapped_rows)
+                except Exception as task_error:
+                    print(f"Error processing task concurrently: {task_error}")
+
             
         if not all_mapped_rows:
             return jsonify({'error': 'No relevant rate data found in tables'}), 404
