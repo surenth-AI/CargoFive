@@ -349,8 +349,39 @@ class MappingEngine:
 
     def write_to_template(self, mapped_rows, output_path):
         """Writes the mapped rows into the Excel template, splitting by transport mode."""
+        import traceback
+        print(f"DEBUG: Starting write_to_template with {len(mapped_rows)} rows to output_path: {output_path}")
+        
+        # Standard fallback headers in case template cannot be loaded
+        STANDARD_HEADERS = [
+            "ORIGIN LOCATION", "ORIGIN PORT", "DESTINATION PORT", "DESTINATION LOCATION", "ORIGIN", "DESTINATION",
+            "CHARGE TYPE", "CHARGE", "RATE BASIS", "CURRENCY", 
+            "20DRY", "40DRY", "40HDRY", "45HDRY", "40NOR", "20RF", "40HCRF", "45RF", "20OT", "40OT", "40HCOT", "20FR", "40FR", "40HCFR", "20TK", "40TK",
+            "PAYMENT TERM", "PROVIDER", "LIMITS", "START DATE", "EXPIRATION DATE", "VIA", "TRANSIT TIME", "COMMODITY", "SERVICE NAME", 
+            "INCLUDED CHARGES", "REMARKS", "MODE OF TRANSPORT", "EXCEPTIONS ORIGIN", "EXCEPTIONS DESTINATION", "NOTES", "RATE OVER"
+        ]
+        
         try:
-            wb = openpyxl.load_workbook(self.template_path)
+            wb = None
+            if os.path.exists(self.template_path):
+                try:
+                    print(f"DEBUG: Loading template from: {self.template_path}")
+                    wb = openpyxl.load_workbook(self.template_path)
+                except Exception as load_err:
+                    print(f"DEBUG: Failed to load template file via openpyxl: {load_err}")
+            
+            if wb is None:
+                print("DEBUG: Template file not found or load failed. Generating empty workbook from code definitions...")
+                wb = openpyxl.Workbook()
+                # Create standard sheets
+                fcl_ws = wb.active
+                fcl_ws.title = "Fletes y Recargos "
+                arb_ws = wb.create_sheet(title="Arbitraries")
+                
+                # Write headers to both sheets
+                for col_idx, header in enumerate(STANDARD_HEADERS, 1):
+                    fcl_ws.cell(row=1, column=col_idx, value=header)
+                    arb_ws.cell(row=1, column=col_idx, value=header)
             
             # Sheet mapping
             # Note: "Fletes y Recargos " has a trailing space in the template
@@ -365,11 +396,18 @@ class MappingEngine:
                 if sheet_name in wb.sheetnames:
                     ws = wb[sheet_name]
                     headers = [cell.value for cell in ws[1]]
-                    # We use .strip().upper() for header matching to be more robust
                     cmap = {str(header).strip().upper(): idx + 1 for idx, header in enumerate(headers) if header}
                     col_maps[key] = (ws, cmap)
+                else:
+                    print(f"DEBUG: Sheet '{sheet_name}' not found in workbook. Creating it and writing standard headers...")
+                    ws = wb.create_sheet(title=sheet_name)
+                    for col_idx, header in enumerate(STANDARD_HEADERS, 1):
+                        ws.cell(row=1, column=col_idx, value=header)
+                    cmap = {str(header).strip().upper(): idx + 1 for idx, header in enumerate(STANDARD_HEADERS) if header}
+                    col_maps[key] = (ws, cmap)
 
-            for row_data in mapped_rows:
+            print(f"DEBUG: Column mapping completed successfully. Now writing rows...")
+            for row_idx, row_data in enumerate(mapped_rows, 1):
                 mode = str(row_data.get("MODE OF TRANSPORT", "")).upper()
                 
                 # Determine target sheet
@@ -412,10 +450,14 @@ class MappingEngine:
 
                             ws.cell(row=start_row, column=cmap[clean_header], value=value)
             
+            print(f"DEBUG: Saving final mapped workbook to: {output_path}")
             wb.save(output_path)
+            print("DEBUG: Workbook saved successfully!")
             return True
         except Exception as e:
-            print(f"Error writing to template: {e}")
+            print(f"CRITICAL ERROR writing to template: {e}")
+            print(traceback.format_exc())
             return False
+
 
 mapping_engine = MappingEngine()

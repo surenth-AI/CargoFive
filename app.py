@@ -171,8 +171,11 @@ def process_to_template():
             return jsonify({'error': 'Failed to write to template'}), 500
             
     except Exception as e:
+        import traceback
         print(f"Processing error: {e}")
+        print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
 
 # --- Update Manual Balance Time ---
 @app.route('/run/update_manual_time', methods=['POST'])
