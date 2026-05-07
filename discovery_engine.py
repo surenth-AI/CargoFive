@@ -13,6 +13,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 MODEL_NAME = "gemini-2.5-flash-lite"
 
+
 class DiscoveryEngine:
     def __init__(self):
         self.model = genai.GenerativeModel(MODEL_NAME)
