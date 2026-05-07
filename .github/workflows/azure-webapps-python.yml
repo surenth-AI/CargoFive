@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy Action: https://github.com/An-to/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy Python app to Azure Web App - cargofive-hub
 
 on:
@@ -28,7 +25,6 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Optional: Upload artifact for deployment job
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -55,4 +51,4 @@ jobs:
         id: deploy-to-webapp
         with:
           app-name: 'cargofive-hub'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_E4B0E5D57B3F4A5E82B1 }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
