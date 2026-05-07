@@ -203,7 +203,12 @@ class MappingEngine:
         5. Strictly populate "START DATE" and "EXPIRATION DATE" in YYYY-MM-DD format using global metadata or table context.
         6. Strictly populate "PROVIDER" with the carrier/provider name.
         7. Format all pricing columns (20DRY, 40DRY, etc.) and Transit Time as INTEGERS.
-        8. CRITICAL LIST FORMATTING RULE: For any column containing multiple items or lists (such as INCLUDED CHARGES, REMARKS, or NOTES), always separate the values with a pipe "|" instead of a comma ",". For example, use "THC | SEC | BAF" instead of "THC, SEC, BAF".
+        8. EXCEPTIONS ORIGIN & EXCEPTIONS DESTINATION (INTELLIGENT EXTRACTION):
+           - Look closely at footnotes, headers, remarks, or specific cell annotations for exclusions, limitations, special requirements, or exception conditions.
+           - If there are limitations or conditions specific to the Origin (e.g., "Origin subject to handling surcharge", "Excludes Terminal X at origin", "Only valid for specific local ZIPs at origin"), map them to "EXCEPTIONS ORIGIN".
+           - If there are limitations or conditions specific to the Destination (e.g., "Excluding local delivery after port", "Subject to destination taxes", "Not applicable for food-grade cargo at destination"), map them to "EXCEPTIONS DESTINATION".
+           - If no specific exceptions apply, set them to null.
+        9. CRITICAL LIST FORMATTING RULE: For any column containing multiple items or lists (such as INCLUDED CHARGES, REMARKS, or NOTES), always separate the values with a pipe "|" instead of a comma ",". For example, use "THC | SEC | BAF" instead of "THC, SEC, BAF".
 
         
         --- OUTPUT FORMAT ---
@@ -323,9 +328,14 @@ class MappingEngine:
         10. TRANSIT TIME: MUST be a single INTEGER. If a range is given, pick the representative number.
         11. COMMODITY: Extract specific commodity restrictions (e.g., FAK, Food Grade).
         12. INCLUDED CHARGES: Identify any surcharges listed as "Included" in the rate or notes. Use pipe-delimited codes.
-        13. NOTES: You MUST strictly write the original sheet name '{sheet_name}' in this field for every single row.
-        14. NULL FIELDS: If a field is not found in the file, return null. DO NOT invent data.
-        15. CRITICAL LIST FORMATTING RULE: For any column containing multiple items or lists (such as INCLUDED CHARGES, REMARKS, or NOTES), always separate the values with a pipe "|" instead of a comma ",". For example, use "THC | SEC | BAF" instead of "THC, SEC, BAF".
+        13. EXCEPTIONS ORIGIN & EXCEPTIONS DESTINATION (INTELLIGENT EXTRACTION):
+            - Look closely at footnotes, headers, remarks, or specific cell annotations for exclusions, limitations, special requirements, or exception conditions.
+            - If there are limitations or conditions specific to the Origin (e.g., "Origin subject to handling surcharge", "Excludes Terminal X at origin", "Only valid for specific local ZIPs at origin"), map them to "EXCEPTIONS ORIGIN".
+            - If there are limitations or conditions specific to the Destination (e.g., "Excluding local delivery after port", "Subject to destination taxes", "Not applicable for food-grade cargo at destination"), map them to "EXCEPTIONS DESTINATION".
+            - If no specific exceptions apply, set them to null.
+        14. NOTES: You MUST strictly write the original sheet name '{sheet_name}' in this field for every single row.
+        15. NULL FIELDS: If a field is not found in the file, return null. DO NOT invent data.
+        16. CRITICAL LIST FORMATTING RULE: For any column containing multiple items or lists (such as INCLUDED CHARGES, REMARKS, or NOTES), always separate the values with a pipe "|" instead of a comma ",". For example, use "THC | SEC | BAF" instead of "THC, SEC, BAF".
 
         --- OUTPUT FORMAT ---
         Return ONLY a JSON array of objects. Each object MUST match these keys:
