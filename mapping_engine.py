@@ -3,6 +3,8 @@ import json
 import openpyxl
 import google.generativeai as genai
 from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor
+
 
 load_dotenv()
 
@@ -58,6 +60,7 @@ class MappingEngine:
                 for row in t.get('data', [])[:20]:
                     extra_context += " | ".join(str(c) for c in row) + "\n"
 
+        relevant_tables = []
         for table in tables:
             # Only process tables mentioned in the task, or all if none specified
             if target_table_names and table.get('name') not in target_table_names:
@@ -66,46 +69,62 @@ class MappingEngine:
             if not target_table_names and not self._is_relevant_table(table):
                 continue
                 
-            mapped_rows = self._map_table_with_ai(sheet_name, table, sheet_metadata, extra_context, instructions)
+            relevant_tables.append(table)
             
-            # Apply sheet-level fallbacks if AI missed them at the table level
-            for row in mapped_rows:
-                if not row.get("START DATE") and sheet_metadata.get("start_date"):
-                    row["START DATE"] = sheet_metadata["start_date"]
-                if not row.get("EXPIRATION DATE") and sheet_metadata.get("expiration_date"):
-                    row["EXPIRATION DATE"] = sheet_metadata["expiration_date"]
-                if not row.get("PROVIDER") and sheet_metadata.get("provider"):
-                    row["PROVIDER"] = sheet_metadata["provider"]
-                if not row.get("COMMODITY") and sheet_metadata.get("commodity"):
-                    row["COMMODITY"] = sheet_metadata["commodity"]
-                if not row.get("SERVICE NAME") and sheet_metadata.get("service_name"):
-                    row["SERVICE NAME"] = sheet_metadata["service_name"]
+        def process_single_table(table):
+            try:
+                mapped_rows = self._map_table_with_ai(sheet_name, table, sheet_metadata, extra_context, instructions)
                 
-                # Dynamic fallback for Origin and Destination from global metadata
-                if not row.get("ORIGIN LOCATION") and sheet_metadata.get("global_origin"):
-                    row["ORIGIN LOCATION"] = sheet_metadata["global_origin"]
-                if not row.get("ORIGIN") and sheet_metadata.get("global_origin"):
-                    row["ORIGIN"] = sheet_metadata["global_origin"]
-                if not row.get("DESTINATION LOCATION") and sheet_metadata.get("global_destination"):
-                    row["DESTINATION LOCATION"] = sheet_metadata["global_destination"]
-                if not row.get("DESTINATION") and sheet_metadata.get("global_destination"):
-                    row["DESTINATION"] = sheet_metadata["global_destination"]
+                # Apply sheet-level fallbacks if AI missed them at the table level
+                for row in mapped_rows:
+                    if not row.get("START DATE") and sheet_metadata.get("start_date"):
+                        row["START DATE"] = sheet_metadata["start_date"]
+                    if not row.get("EXPIRATION DATE") and sheet_metadata.get("expiration_date"):
+                        row["EXPIRATION DATE"] = sheet_metadata["expiration_date"]
+                    if not row.get("PROVIDER") and sheet_metadata.get("provider"):
+                        row["PROVIDER"] = sheet_metadata["provider"]
+                    if not row.get("COMMODITY") and sheet_metadata.get("commodity"):
+                        row["COMMODITY"] = sheet_metadata["commodity"]
+                    if not row.get("SERVICE NAME") and sheet_metadata.get("service_name"):
+                        row["SERVICE NAME"] = sheet_metadata["service_name"]
+                    
+                    # Dynamic fallback for Origin and Destination from global metadata
+                    if not row.get("ORIGIN LOCATION") and sheet_metadata.get("global_origin"):
+                        row["ORIGIN LOCATION"] = sheet_metadata["global_origin"]
+                    if not row.get("ORIGIN") and sheet_metadata.get("global_origin"):
+                        row["ORIGIN"] = sheet_metadata["global_origin"]
+                    if not row.get("DESTINATION LOCATION") and sheet_metadata.get("global_destination"):
+                        row["DESTINATION LOCATION"] = sheet_metadata["global_destination"]
+                    if not row.get("DESTINATION") and sheet_metadata.get("global_destination"):
+                        row["DESTINATION"] = sheet_metadata["global_destination"]
 
-                # Python fallback to guarantee valid Ports are never missing by using Location names directly
-                if not row.get("ORIGIN PORT") and row.get("ORIGIN LOCATION"):
-                    row["ORIGIN PORT"] = str(row["ORIGIN LOCATION"]).strip().upper()
-                if not row.get("DESTINATION PORT") and row.get("DESTINATION LOCATION"):
-                    row["DESTINATION PORT"] = str(row["DESTINATION LOCATION"]).strip().upper()
+                    # Python fallback to guarantee valid Ports are never missing by using Location names directly
+                    if not row.get("ORIGIN PORT") and row.get("ORIGIN LOCATION"):
+                        row["ORIGIN PORT"] = str(row["ORIGIN LOCATION"]).strip().upper()
+                    if not row.get("DESTINATION PORT") and row.get("DESTINATION LOCATION"):
+                        row["DESTINATION PORT"] = str(row["DESTINATION LOCATION"]).strip().upper()
 
-                # Enforce that the sheet name is strictly written in the NOTES / NOTAS field
-                if not row.get("NOTES"):
-                    row["NOTES"] = str(sheet_name).strip()
-                else:
-                    existing_notes = str(row.get("NOTES")).strip()
-                    if str(sheet_name).strip() not in existing_notes:
-                        row["NOTES"] = f"[{str(sheet_name).strip()}] {existing_notes}"
-                
-            mapped_data.extend(mapped_rows)
+                    # Enforce that the sheet name is strictly written in the NOTES / NOTAS field
+                    if not row.get("NOTES"):
+                        row["NOTES"] = str(sheet_name).strip()
+                    else:
+                        existing_notes = str(row.get("NOTES")).strip()
+                        if str(sheet_name).strip() not in existing_notes:
+                            row["NOTES"] = f"[{str(sheet_name).strip()}] {existing_notes}"
+                return mapped_rows
+            except Exception as single_err:
+                print(f"Error processing single table concurrently: {single_err}")
+                return []
+
+        if relevant_tables:
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [executor.submit(process_single_table, t) for t in relevant_tables]
+                for future in futures:
+                    try:
+                        mapped_data.extend(future.result())
+                    except Exception as e:
+                        print(f"Error reading parallel table result: {e}")
+
 
         # Separate LLM call to find additional charges and surcharges (isolated surcharge discovery path)
         try:
