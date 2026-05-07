@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axe Global | Logistics Rate Mapper</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Professional Sidebar Menu with Category Headers and Indented Sub-navigation -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <svg display="block" role="presentation" viewBox="0 0 126 32" xmlns="http://www.w3.org/2000/svg" style="height: 36px; width: auto;"><defs><linearGradient id="VDmDmnQlp-3724136780-linear-gradient" x1="0" x2="1" y1="0.4975124378109453" y2="0.5024875621890547"><stop offset="0" stop-color="rgb(64, 72, 194)"/><stop offset="1" stop-color="rgb(39, 116, 227)"/></linearGradient><linearGradient id="aeNeKvNOc-3724136780-linear-gradient" x1="0" x2="1" y1="0.4975124378109453" y2="0.5024875621890547"><stop offset="0" stop-color="rgb(64, 72, 194)"/><stop offset="1" stop-color="rgb(39, 116, 227)"/></linearGradient><linearGradient id="K7GqY94vW-3724136780-linear-gradient" x1="0" x2="1" y1="0.4975124378109453" y2="0.5024875621890547"><stop offset="0" stop-color="rgb(64, 72, 194)"/><stop offset="1" stop-color="rgb(39, 116, 227)"/></linearGradient><linearGradient id="uawgjJSgJ-3724136780-linear-gradient" x1="0" x2="1" y1="0.4975124378109453" y2="0.5024875621890547"><stop offset="0" stop-color="rgb(64, 72, 194)"/><stop offset="1" stop-color="rgb(39, 116, 227)"/></linearGradient></defs><g fill="transparent" height="32px" id="fAn3izH_L" width="126px"><path d="M 5.414 0.439 L 7.419 0.439 L 12.834 12.833 L 10.549 12.833 L 9.301 9.862 L 3.481 9.862 L 2.215 12.833 L 0 12.833 L 5.415 0.439 Z M 8.508 7.947 L 6.381 3.024 L 4.271 7.947 Z M 18.055 6.663 L 20.218 3.551 L 22.486 3.551 L 19.215 8.087 L 22.626 12.834 L 20.306 12.834 L 18.02 9.529 L 15.752 12.834 L 13.484 12.834 L 16.877 8.105 L 13.606 3.551 L 15.927 3.551 L 18.054 6.663 Z M 22.959 8.227 L 22.959 8.192 C 22.959 5.537 24.84 3.357 27.495 3.357 C 30.448 3.357 31.943 5.677 31.943 8.35 C 31.943 8.544 31.925 8.736 31.907 8.948 L 25.086 8.948 C 25.314 10.46 26.386 11.304 27.758 11.304 C 28.796 11.304 29.534 10.918 30.273 10.196 L 31.521 11.304 C 30.642 12.359 29.428 13.045 27.723 13.045 C 25.033 13.045 22.958 11.094 22.958 8.227 Z M 29.834 7.542 C 29.693 6.171 28.884 5.098 27.477 5.098 C 26.177 5.098 25.262 6.1 25.069 7.542 Z M 36.922 6.716 L 36.922 6.681 C 36.922 3.235 39.559 0.316 43.269 0.316 C 45.414 0.316 46.732 0.914 47.998 1.987 L 46.627 3.621 C 45.677 2.831 44.746 2.321 43.182 2.321 C 40.913 2.321 39.191 4.29 39.191 6.646 L 39.191 6.681 C 39.191 9.213 40.861 11.077 43.375 11.077 C 44.536 11.077 45.59 10.707 46.346 10.145 L 46.346 7.86 L 43.199 7.86 L 43.199 5.961 L 48.439 5.961 L 48.439 11.13 C 47.226 12.167 45.486 13.047 43.305 13.047 C 39.454 13.047 36.923 10.304 36.923 6.717 Z M 50.706 0 L 52.851 0 L 52.851 12.834 L 50.706 12.834 Z M 54.714 8.245 L 54.714 8.21 C 54.714 5.555 56.824 3.358 59.672 3.358 C 62.52 3.358 64.612 5.52 64.612 8.175 L 64.612 8.211 C 64.612 10.848 62.502 13.046 59.636 13.046 C 56.771 13.046 54.713 10.883 54.713 8.246 Z M 62.485 8.245 L 62.485 8.21 C 62.485 6.575 61.307 5.221 59.636 5.221 C 57.966 5.221 56.841 6.557 56.841 8.174 L 56.841 8.21 C 56.841 9.827 58.019 11.181 59.672 11.181 C 61.325 11.181 62.485 9.844 62.485 8.244 Z M 68.497 11.392 L 68.497 12.834 L 66.353 12.834 L 66.353 0 L 68.497 0 L 68.497 5.099 C 69.183 4.132 70.15 3.359 71.662 3.359 C 73.843 3.359 75.97 5.081 75.97 8.176 L 75.97 8.211 C 75.97 11.288 73.859 13.029 71.662 13.029 C 70.115 13.029 69.148 12.255 68.497 11.394 Z M 73.807 8.211 L 73.807 8.175 C 73.807 6.382 72.576 5.204 71.152 5.204 C 69.728 5.204 68.445 6.4 68.445 8.175 L 68.445 8.211 C 68.445 9.987 69.711 11.182 71.152 11.182 C 72.593 11.182 73.807 10.039 73.807 8.211 Z M 77.13 10.162 L 77.13 10.126 C 77.13 8.122 78.712 7.137 80.981 7.137 C 82.018 7.137 82.757 7.295 83.477 7.524 L 83.477 7.295 C 83.477 5.977 82.669 5.273 81.174 5.273 C 80.138 5.273 79.364 5.501 78.52 5.853 L 77.939 4.183 C 78.976 3.726 79.978 3.427 81.456 3.427 C 82.845 3.427 83.883 3.796 84.533 4.464 C 85.219 5.132 85.535 6.116 85.535 7.329 L 85.535 12.832 L 83.461 12.832 L 83.461 11.672 C 82.828 12.428 81.86 13.026 80.436 13.026 C 78.696 13.026 77.131 12.024 77.131 10.161 Z M 83.512 9.494 L 83.512 8.861 C 82.967 8.65 82.246 8.491 81.403 8.491 C 80.031 8.491 79.222 9.071 79.222 10.038 L 79.222 10.074 C 79.222 10.97 80.013 11.48 81.033 11.48 C 82.44 11.48 83.512 10.672 83.512 9.494 Z M 87.784 0 L 89.929 0 L 89.929 12.834 L 87.784 12.834 Z" fill="var(--primary)" id="P7yDZK3WX" transform="translate(36.111 8.151)"/><path d="M 2.982 19.981 C 2.377 18.466 2.044 16.813 2.044 15.081 C 2.044 8.969 6.192 3.827 11.829 2.32 L 12.953 0 C 5.618 1.112 0 7.44 0 15.081 C 0 17.643 0.633 20.058 1.75 22.177 Z" fill="url(#VDmDmnQlp-3724136780-linear-gradient)" id="VDmDmnQlp" transform="translate(0 1.663)"/><path d="M 11.243 15.129 C 11.243 16.826 10.923 18.45 10.34 19.941 L 11.578 22.149 C 12.67 20.048 13.286 17.66 13.286 15.129 C 13.286 7.372 7.495 0.966 0 0 L 0.955 2.241 C 6.845 3.572 11.243 8.838 11.243 15.129 Z" fill="url(#aeNeKvNOc-3724136780-linear-gradient)" id="aeNeKvNOc" transform="translate(17.222 1.615)"/><path d="M 8.196 2.221 C 5.508 2.221 3.009 1.419 0.924 0.039 L 0 1.877 C 2.368 3.389 5.18 4.264 8.196 4.264 C 11.212 4.264 14.073 3.373 16.454 1.838 L 15.53 0 C 13.432 1.403 10.91 2.222 8.196 2.222 Z" fill="url(#K7GqY94vW-3724136780-linear-gradient)" id="K7GqY94vW" transform="translate(7.06 27.736)"/><path d="M 19.586 14.545 L 17.421 10.3 C 17.581 10.118 17.669 9.884 17.668 9.641 C 17.668 9.087 17.219 8.639 16.666 8.639 C 16.113 8.639 15.664 9.088 15.664 9.641 C 15.664 10.194 16.113 10.644 16.666 10.644 C 16.697 10.644 16.727 10.642 16.758 10.639 L 19.046 15.124 L 20.905 15.917 L 19.1 18.578 C 19.03 18.562 18.956 18.554 18.881 18.554 C 18.327 18.554 17.879 19.003 17.879 19.556 C 17.879 20.109 18.328 20.558 18.881 20.558 C 19.301 20.558 19.659 20.301 19.809 19.936 L 21.386 19.936 L 23.61 24.168 C 23.457 24.348 23.373 24.577 23.373 24.813 C 23.373 25.367 23.822 25.815 24.375 25.815 C 24.576 25.815 24.763 25.756 24.92 25.654 L 27.244 27.39 L 23.594 27.39 L 20.414 21.352 L 10.164 21.352 L 12.317 19.927 L 14.361 19.927 C 14.509 20.296 14.87 20.557 15.292 20.557 C 15.846 20.557 16.294 20.108 16.294 19.555 C 16.294 19.002 15.845 18.553 15.292 18.553 C 14.87 18.553 14.509 18.814 14.361 19.184 L 12.093 19.184 L 8.729 21.409 L 5.75 27.39 L 1.847 27.39 L 4.493 25.634 C 4.656 25.748 4.853 25.815 5.067 25.815 C 5.621 25.815 6.069 25.366 6.069 24.813 C 6.069 24.512 5.936 24.241 5.725 24.058 L 6.083 22.906 L 7.817 19.549 L 11.486 17.72 L 11.486 17.797 L 18.636 17.792 L 14.926 10.757 L 14.996 2.274 L 20.146 12.229 C 19.977 12.413 19.882 12.655 19.883 12.905 C 19.883 13.459 20.332 13.908 20.885 13.908 C 21.438 13.908 21.887 13.458 21.887 12.905 C 21.887 12.352 21.438 11.903 20.885 11.903 C 20.862 11.903 20.84 11.905 20.817 11.907 L 14.657 0 L 6.595 14.995 C 6.558 14.991 6.521 14.988 6.482 14.988 C 5.928 14.988 5.48 15.438 5.48 15.991 C 5.48 16.544 5.929 16.993 6.482 16.993 C 7.035 16.993 7.484 16.544 7.484 15.991 C 7.484 15.745 7.396 15.522 7.25 15.348 L 11.696 7.078 L 14.127 10.871 L 11.051 17.105 L 8.395 18.429 L 11.889 11.664 C 11.908 11.665 11.927 11.666 11.946 11.666 C 12.5 11.666 12.948 11.217 12.948 10.664 C 12.948 10.111 12.499 9.662 11.946 9.662 C 11.393 9.662 10.944 10.111 10.944 10.664 C 10.944 10.929 11.047 11.169 11.214 11.347 L 7.266 18.991 L 5.851 19.696 L 5.64 17.207 L 0 28.133 L 6.212 28.133 L 9.218 22.095 L 19.966 22.095 L 23.146 28.133 L 28.976 28.133 L 22.98 15.991 Z M 12.1 6.328 L 14.251 2.325 L 14.191 9.593 Z M 14.565 11.665 L 17.404 17.049 L 11.907 17.053 L 14.565 11.666 Z M 6.689 20.11 L 5.999 21.446 L 5.919 20.495 L 6.689 20.111 Z M 5.126 19.627 L 5.126 20.146 L 4.706 20.355 Z M 4.387 21.258 L 5.202 20.852 L 5.36 22.724 L 5.021 23.814 C 4.489 23.837 4.064 24.275 4.064 24.814 C 4.064 24.882 4.071 24.948 4.084 25.013 L 1.596 26.664 L 4.386 21.259 Z M 25.349 25.046 C 25.367 24.971 25.377 24.894 25.377 24.813 C 25.377 24.259 24.928 23.811 24.375 23.811 C 24.339 23.811 24.302 23.813 24.266 23.818 L 21.835 19.192 L 19.813 19.192 C 19.787 19.124 19.753 19.059 19.713 18.998 L 21.603 16.213 L 22.434 16.568 L 27.364 26.552 L 25.348 25.047 Z" fill="url(#uawgjJSgJ-3724136780-linear-gradient)" id="uawgjJSgJ" transform="translate(0.602 0)"/><path d="M 0.554 0 C 0.248 0 0 0.248 0 0.554 C 0 0.86 0.248 1.108 0.554 1.108 C 0.86 1.108 1.108 0.86 1.108 0.554 C 1.108 0.248 0.86 0 0.554 0 Z" fill="rgb(112, 219, 249)" id="nlpBoxhUr" transform="translate(15.34 19)"/><path d="M 0 0.554 C 0 0.248 0.248 0 0.554 0 C 0.86 0 1.108 0.248 1.108 0.554 C 1.108 0.86 0.86 1.108 0.554 1.108 C 0.248 1.108 0 0.86 0 0.554 Z" fill="rgb(112, 219, 249)" id="IgU1Uqy51" transform="translate(18.929 19)"/><path d="M 0 0.554 C 0 0.248 0.248 0 0.554 0 C 0.86 0 1.108 0.248 1.108 0.554 C 1.108 0.86 0.86 1.108 0.554 1.108 C 0.248 1.108 0 0.86 0 0.554 Z" fill="rgb(112, 219, 249)" id="y2Yldnsp_" transform="translate(16.714 9.086)"/><path d="M 14.957 2.241 C 14.651 2.241 14.403 2.489 14.403 2.795 C 14.403 3.101 14.651 3.349 14.957 3.349 C 15.263 3.349 15.511 3.101 15.511 2.795 C 15.511 2.489 15.263 2.241 14.957 2.241 Z M 6.018 0 C 5.712 0 5.464 0.248 5.464 0.554 C 5.464 0.86 5.712 1.108 6.018 1.108 C 6.324 1.108 6.572 0.86 6.572 0.554 C 6.572 0.248 6.324 0 6.018 0 Z M 0.554 5.326 C 0.248 5.326 0 5.574 0 5.88 C 0 6.186 0.248 6.434 0.554 6.434 C 0.86 6.434 1.108 6.186 1.108 5.88 C 1.108 5.574 0.86 5.326 0.554 5.326 Z" fill="rgb(112, 219, 249)" id="n5c8DZvnx" transform="translate(6.531 10.11)"/><path d="M 0 0.554 C 0 0.248 0.248 0 0.554 0 C 0.86 0 1.108 0.248 1.108 0.554 C 1.108 0.86 0.86 1.108 0.554 1.108 C 0.248 1.108 0 0.86 0 0.554 Z" fill="rgb(112, 219, 249)" id="rK4JNnqG9" transform="translate(5.115 24.258)"/><path d="M 0.554 0 C 0.248 0 0 0.248 0 0.554 C 0 0.86 0.248 1.108 0.554 1.108 C 0.86 1.108 1.108 0.86 1.108 0.554 C 1.108 0.248 0.86 0 0.554 0 Z" fill="rgb(112, 219, 249)" id="odOm004jY" transform="translate(24.423 24.258)"/></g></svg>
+            </div>
+            
+            <div class="sidebar-menu">
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Menu</span>
+                <button class="sidebar-link active" id="nav-mapper-btn" onclick="switchView('mapper-section', 'nav-mapper-btn')">Rate Mapping Hub</button>
+                <button class="sidebar-link" id="nav-logs-btn" onclick="switchView('logs-section', 'nav-logs-btn')">Processing Audit Logs</button>
+                <button class="sidebar-link" id="nav-issues-btn" onclick="switchView('issues-section', 'nav-issues-btn')">System Issues & Feedback</button>
+                
+                {% if role == 'lead' %}
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; margin-top: 1.5rem;">Team Management</span>
+                <button class="sidebar-link" id="nav-kpis-btn" onclick="switchView('kpis-section', 'nav-kpis-btn')" style="padding-left: 2rem;">Team Performance</button>
+                <button class="sidebar-link" id="nav-users-btn" onclick="switchView('users-section', 'nav-users-btn')" style="padding-left: 2rem;">User Management</button>
+                {% endif %}
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile-card">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.1rem;">Active Session</span>
+                    <span class="username" style="font-weight: 700; color: var(--text-main); font-size: 0.95rem; text-transform: capitalize;">{{ username }}</span>
+                    <span class="role-designation" style="margin-top: 0.2rem;"><span class="badge" style="padding: 0.2rem 0.6rem;">{{ role|upper }} AUDITOR</span></span>
+                </div>
+                <button onclick="location.href='/logout'" class="logout-btn" style="width: 100%;">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- Main Content Panel -->
+        <div class="main-content">
+            <header style="text-align: left; margin-bottom: 3.5rem;">
+                <h1>Axe Global Logistics Rate Mapping System</h1>
+                <p>Enterprise-grade multi-agent orchestrator for automated rate sheet processing</p>
+            </header>
+
+            <main>
+                <!-- ================= SECTION 1: RATE MAPPING HUB ================= -->
+                <div id="mapper-section" class="tab-view-content">
+                    <div class="glass-card" id="upload-card">
+                        <div class="section-header" style="margin-bottom: 1.5rem;">
+                            <h2>Upload & Process New Rate Sheet</h2>
+                        </div>
+                        <div class="upload-zone" id="drop-zone">
+                            <input type="file" id="file-input" hidden accept=".xlsx, .xls">
+                            <!-- Premium SVG Cloud/Document Upload Icon -->
+                            <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 54px; height: 54px; margin: 0 auto 1.5rem; color: var(--accent); display: block;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <h2>Drag and drop Excel rate sheet here</h2>
+                            <p>or click to browse from local computer</p>
+                        </div>
+                    </div>
+
+                    <!-- Mapping Results Grid -->
+                    <div class="results-container" id="results-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <div class="sheet-tabs" id="sheet-tabs" style="margin-bottom: 0;">
+                                <!-- Tabs will be injected here -->
+                            </div>
+                            <button class="btn-primary" id="process-btn">Process to Template</button>
+                        </div>
+                        <div id="active-sheet-content">
+                            <!-- Tables for active sheet will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= SECTION 2: AUDIT LOGS ================= -->
+                <div id="logs-section" class="tab-view-content" style="display: none;">
+                    <div class="glass-card">
+                        <div class="section-header" style="margin-bottom: 2rem;">
+                            <h2>My Rates Processing Audit Log</h2>
+                            {% if role != 'lead' %}
+                            <button class="btn-primary" onclick="openModal('export-modal')">Export My Log Report</button>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="data-table-wrapper" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: var(--bg-card);">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Audit ID</th>
+                                        <th>Filename</th>
+                                        <th>Execution Date & Time</th>
+                                        <th>System AI Duration</th>
+                                        <th>Manual Effort & Auditing Time</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-history-tbody">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= SECTION 5: ISSUES & FEEDBACK ================= -->
+                <div id="issues-section" class="tab-view-content" style="display: none;">
+                    <div class="issues-grid" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2.5rem; align-items: start;">
+                        <!-- Left Side: Issue Form -->
+                        <div class="glass-card">
+                            <div class="section-header" style="margin-bottom: 1.5rem;">
+                                <h2 style="color: var(--primary); font-weight: 700;">Log System Issue / Feedback</h2>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Help us optimize system performance and AI mapper accuracy</p>
+                            </div>
+                            
+                            <form id="log-issue-form">
+                                <div class="form-group" style="margin-bottom: 1.25rem;">
+                                    <label for="issue-title" style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Issue / Feedback Title</label>
+                                    <input type="text" id="issue-title" class="form-input" style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);" required placeholder="Brief summary of the issue">
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+                                    <div class="form-group">
+                                        <label for="issue-category" style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Category</label>
+                                        <select id="issue-category" class="form-input" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                                            <option value="AI Extraction Accuracy">AI Extraction Accuracy</option>
+                                            <option value="System Performance Speed">System Performance Speed</option>
+                                            <option value="UI & Navigation Experience">UI & Navigation Experience</option>
+                                            <option value="Bug Report">Bug Report</option>
+                                            <option value="Feature Request">Feature Request</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="issue-severity" style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Severity</label>
+                                        <select id="issue-severity" class="form-input" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                                            <option value="Low">Low / Inquiry</option>
+                                            <option value="Medium" selected>Medium / Warning</option>
+                                            <option value="High">High / Issue</option>
+                                            <option value="Critical">Critical / Blocker</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 1.25rem;">
+                                    <label for="issue-rating" style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">System Performance Rating (1-5)</label>
+                                    <select id="issue-rating" class="form-input" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                                        <option value="5">★★★★★ - Excellent & Fast</option>
+                                        <option value="4" selected>★★★★☆ - Good Performance</option>
+                                        <option value="3">★★★☆☆ - Average Speed</option>
+                                        <option value="2">★★☆☆☆ - Needs Improvement</option>
+                                        <option value="1">★☆☆☆☆ - Very Slow / Unusable</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 1.5rem;">
+                                    <label for="issue-description" style="display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem;">Detailed Description</label>
+                                    <textarea id="issue-description" class="form-input" style="width: 100%; height: 120px; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); resize: none;" required placeholder="Describe the behavior or feedback in detail..."></textarea>
+                                </div>
+
+                                <div id="issue-submit-message" style="margin-bottom: 1rem; font-size: 0.9rem; font-weight: 600; display: none;"></div>
+                                <button type="submit" class="btn-primary" style="width: 100%; padding: 0.85rem; border-radius: 8px;">Log System Issue</button>
+                            </form>
+                        </div>
+
+                        <!-- Right Side: Active Issues Table -->
+                        <div class="glass-card" style="align-self: stretch;">
+                            <div class="section-header" style="margin-bottom: 1.5rem;">
+                                <h2 style="color: var(--primary); font-weight: 700;">System Issues & Feedback Log</h2>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">Real-time feed of associate feedback and reported issues</p>
+                            </div>
+                            
+                            <div class="data-table-wrapper" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: var(--bg-card);">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Reporter</th>
+                                            <th>Title</th>
+                                            <th>Category</th>
+                                            <th>Severity</th>
+                                            <th>Rating</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="issues-tbody">
+                                        <!-- Issues list injected dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- ================= SECTION 3: TEAM PERFORMANCE (LEAD ONLY) ================= -->
+                {% if role == 'lead' %}
+                <div id="kpis-section" class="tab-view-content" style="display: none;">
+                    <div class="glass-card">
+                        <div class="section-header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="color: var(--primary); font-weight: 700;">Team Performance Metrics</h2>
+                            <button class="btn-primary" onclick="openModal('export-modal')" style="background: var(--primary); box-shadow: none;">Export Audit Report</button>
+                        </div>
+                        
+                        <!-- KPI Summary cards -->
+                        <div class="kpi-grid" style="margin-bottom: 2.5rem;">
+                            <div class="kpi-card blue">
+                                <h4>Completed Shipments/Files</h4>
+                                <div class="value" id="lead-total-files">0</div>
+                            </div>
+                            <div class="kpi-card pink">
+                                <h4>Average System AI Speed</h4>
+                                <div class="value" id="lead-avg-time">0s</div>
+                            </div>
+                            <div class="kpi-card">
+                                <h4>Total Manual Auditing Effort</h4>
+                                <div class="value" id="lead-total-manual">0m</div>
+                            </div>
+                        </div>
+
+                        <!-- Team Performance KPIs Table -->
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-main); font-weight: 700;">Logistics Associate KPI & Performance Speed</h3>
+                        <div class="data-table-wrapper" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: var(--bg-card);">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Logistics Associate</th>
+                                        <th>Total Completed Files</th>
+                                        <th>Total AI System Time (s)</th>
+                                        <th>Total Manual Auditing Time (s)</th>
+                                        <th>Average AI Speed per File (s)</th>
+                                        <th>Average Manual Effort Speed (s)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lead-kpis-tbody">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= SECTION 4: USER MANAGEMENT (LEAD ONLY) ================= -->
+                <div id="users-section" class="tab-view-content" style="display: none;">
+                    <div class="glass-card">
+                        <div class="section-header" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 style="color: var(--primary); font-weight: 700;">User Accounts Management</h2>
+                            <button class="btn-primary" onclick="openModal('create-user-modal')" style="background: var(--accent); box-shadow: none;">Add Team Member</button>
+                        </div>
+
+                        <div class="data-table-wrapper" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: var(--bg-card); max-width: 700px;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User ID</th>
+                                        <th>Username</th>
+                                        <th>Designated Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lead-users-tbody">
+                                    <!-- User accounts list injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+    <div class="modal" id="create-user-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('create-user-modal')">&times;</button>
+            <h2 style="margin-bottom: 1.5rem; color: var(--primary);">Register Associate Credentials</h2>
+            <form id="create-user-form">
+                <div class="form-group">
+                    <label for="new-username">Username</label>
+                    <input type="text" id="new-username" class="form-input" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Password</label>
+                    <input type="password" id="new-password" class="form-input" required placeholder="Enter password">
+                </div>
+                <div class="form-group">
+                    <label for="new-role">Role Designation</label>
+                    <select id="new-role" class="form-input">
+                        <option value="employee">Logistics Associate</option>
+                        <option value="lead">Lead Auditor</option>
+                    </select>
+                </div>
+                <div id="create-user-message" style="margin-bottom: 1rem; font-size: 0.9rem; display: none;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="export-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('export-modal')">&times;</button>
+            <h2 style="margin-bottom: 1rem; color: var(--primary);">Export Performance Log Report</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Select the date-time range for log auditing data export:</p>
+            
+            <form action="/export_report" method="GET" target="_blank" onsubmit="closeModal('export-modal')">
+                <div class="export-inputs">
+                    <div class="form-group">
+                        <label for="from_date">Start Date</label>
+                        <input type="date" id="from_date" name="from_date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="to_date">End Date</label>
+                        <input type="date" id="to_date" name="to_date" class="form-input" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Download Excel Audit Logs</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-text">Analyzing workbook with Gemini AI...</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Switch views (sidebar navigation links)
+        function switchView(viewId, btnId) {
+            document.querySelectorAll('.tab-view-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.sidebar-link').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(viewId).style.display = 'block';
+            document.getElementById(btnId).classList.add('active');
+        }
+
+        // Modal Handlers
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Account Creation
+        const createForm = document.getElementById('create-user-form');
+        if (createForm) {
+            createForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('new-username').value;
+                const password = document.getElementById('new-password').value;
+                const role = document.getElementById('new-role').value;
+                const msgDiv = document.getElementById('create-user-message');
+                
+                msgDiv.style.display = 'none';
+                
+                try {
+                    const res = await fetch('/admin/create_user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password, role })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        msgDiv.style.color = '#34d399';
+                        msgDiv.innerText = data.message;
+                        msgDiv.style.display = 'block';
+                        createForm.reset();
+                        loadLeadDashboard();
+                    } else {
+                        msgDiv.style.color = '#f87171';
+                        msgDiv.innerText = data.error;
+                        msgDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    msgDiv.style.color = '#f87171';
+                    msgDiv.innerText = 'Network error.';
+                    msgDiv.style.display = 'block';
+                }
+            });
+        }
+
+        // Save Manual balance time entry
+        async function saveManualTime(runId) {
+            const inputVal = document.getElementById(`manual-${runId}`).value;
+            const statusSpan = document.getElementById(`status-${runId}`);
+            
+            try {
+                const res = await fetch('/run/update_manual_time', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ run_id: runId, manual_duration_sec: inputVal })
+                });
+                if (res.ok) {
+                    statusSpan.innerText = "✓ Committed";
+                    statusSpan.style.color = "#34d399";
+                    setTimeout(() => {
+                        statusSpan.innerText = "";
+                        loadUserHistory();
+                        if (typeof loadLeadDashboard === 'function') loadLeadDashboard();
+                    }, 1500);
+                }
+            } catch (err) {
+                statusSpan.innerText = "✗ Failed";
+                statusSpan.style.color = "#f87171";
+            }
+        }
+
+        // Load History for Logged in User
+        async function loadUserHistory() {
+            try {
+                const res = await fetch('/api/user_history');
+                const data = await res.json();
+                const tbody = document.getElementById('user-history-tbody');
+                tbody.innerHTML = '';
+                
+                data.history.forEach(run => {
+                    const systemTime = run.system_duration_sec ? `${run.system_duration_sec}s` : 'Processing';
+                    const manualVal = run.manual_duration_sec || 0;
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${run.id}</td>
+                        <td style="font-weight: 700; color: var(--primary);">${run.filename}</td>
+                        <td>${new Date(run.start_time).toLocaleString()}</td>
+                        <td><span class="badge">${systemTime}</span></td>
+                        <td>
+                            <div class="manual-entry-inline">
+                                <input type="number" id="manual-${run.id}" class="form-input" value="${manualVal}">
+                                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">sec</span>
+                            </div>
+                        </td>
+                        <td><span class="badge" style="background: ${run.status === 'completed' ? '#f0fdf4' : '#fffbeb'}; color: ${run.status === 'completed' ? '#15803d' : '#b45309'}; border-color: ${run.status === 'completed' ? '#bbf7d0' : '#fef08a'};">${run.status.toUpperCase()}</span></td>
+                        <td>
+                            <button class="btn-primary" onclick="saveManualTime(${run.id})" style="padding: 0.4rem 1rem; font-size: 0.8rem; box-shadow: none;">Commit</button>
+                            <span id="status-${run.id}" style="font-size: 0.8rem; margin-left: 0.5rem; font-weight:600"></span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error("Failed to load user history", err);
+            }
+        }
+
+        // Load Lead Dashboard Data
+        async function loadLeadDashboard() {
+            const isLeadRole = {{ 'true' if role == 'lead' else 'false' }};
+            if (!isLeadRole) return;
+            
+            try {
+                const res = await fetch('/api/lead_dashboard');
+                const data = await res.json();
+                
+                // Aggregate Stats
+                let totalFiles = 0;
+                let totalSystemSec = 0;
+                let totalManualSec = 0;
+                
+                const kpisTbody = document.getElementById('lead-kpis-tbody');
+                kpisTbody.innerHTML = '';
+                
+                data.kpis.forEach(kpi => {
+                    totalFiles += kpi.total_files || 0;
+                    totalSystemSec += kpi.total_system_sec || 0;
+                    totalManualSec += kpi.total_manual_sec || 0;
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${kpi.username}</strong></td>
+                        <td>${kpi.total_files || 0}</td>
+                        <td>${kpi.total_system_sec || 0}s</td>
+                        <td>${kpi.total_manual_sec || 0}s</td>
+                        <td>${kpi.avg_system_sec || 0}s</td>
+                        <td>${kpi.avg_manual_sec || 0}s</td>
+                    `;
+                    kpisTbody.appendChild(tr);
+                });
+                
+                document.getElementById('lead-total-files').innerText = totalFiles;
+                document.getElementById('lead-avg-time').innerText = totalFiles ? `${Math.round(totalSystemSec / totalFiles)}s` : '0s';
+                document.getElementById('lead-total-manual').innerText = `${Math.round(totalManualSec / 60)}m`;
+                
+                // Populate Registered Users Accounts list dynamically
+                const usersTbody = document.getElementById('lead-users-tbody');
+                if (usersTbody && data.users) {
+                    usersTbody.innerHTML = '';
+                    data.users.forEach(user => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${user.id}</td>
+                            <td><strong>${user.username}</strong></td>
+                            <td><span class="badge" style="background: #f1f5f9; color: var(--text-muted); border-color: var(--border-color);">${user.role.toUpperCase()}</span></td>
+                        `;
+                        usersTbody.appendChild(tr);
+                    });
+                }
+                
+            } catch (err) {
+                console.error("Failed to load lead dashboard", err);
+            }
+        }
+
+        // Load System Issues & Feedback Logs
+        async function loadIssues() {
+            try {
+                const res = await fetch('/api/issues');
+                const data = await res.json();
+                const tbody = document.getElementById('issues-tbody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                
+                data.issues.forEach(issue => {
+                    const stars = '★'.repeat(issue.performance_rating) + '☆'.repeat(5 - issue.performance_rating);
+                    const severityColors = {
+                        'Low': { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' },
+                        'Medium': { bg: '#fffbeb', color: '#d97706', border: '#fef3c7' },
+                        'High': { bg: '#fff1f2', color: '#e11d48', border: '#ffe4e6' },
+                        'Critical': { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' }
+                    };
+                    const sev = severityColors[issue.severity] || { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' };
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${issue.employee}</strong></td>
+                        <td style="font-weight: 600; color: var(--primary);" title="${issue.description}">${issue.title}</td>
+                        <td><span class="badge" style="background: #f0fdfa; color: #0d9488; border-color: #ccfbf1;">${issue.category}</span></td>
+                        <td><span class="badge" style="background: ${sev.bg}; color: ${sev.color}; border-color: ${sev.border};">${issue.severity}</span></td>
+                        <td style="color: #f59e0b; font-size: 0.85rem; letter-spacing: 1px;">${stars}</td>
+                        <td><span class="badge" style="background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;">${issue.status.toUpperCase()}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error("Failed to load issues feed", err);
+            }
+        }
+
+        const issueForm = document.getElementById('log-issue-form');
+        if (issueForm) {
+            issueForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const title = document.getElementById('issue-title').value;
+                const category = document.getElementById('issue-category').value;
+                const severity = document.getElementById('issue-severity').value;
+                const performance_rating = document.getElementById('issue-rating').value;
+                const description = document.getElementById('issue-description').value;
+                const msgDiv = document.getElementById('issue-submit-message');
+                
+                msgDiv.style.display = 'none';
+                
+                try {
+                    const res = await fetch('/api/log_issue', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, category, severity, performance_rating, description })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        msgDiv.style.color = '#10b981';
+                        msgDiv.innerText = data.message;
+                        msgDiv.style.display = 'block';
+                        issueForm.reset();
+                        loadIssues();
+                    } else {
+                        msgDiv.style.color = '#ef4444';
+                        msgDiv.innerText = data.error;
+                        msgDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    msgDiv.style.color = '#ef4444';
+                    msgDiv.innerText = 'Network error.';
+                    msgDiv.style.display = 'block';
+                }
+            });
+        }
+
+        // Initialize Dashboards on Page Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadUserHistory();
+            loadLeadDashboard();
+            loadIssues();
+        });
+    </script>
+</body>
+</html>
