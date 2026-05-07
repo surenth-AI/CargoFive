@@ -54,5 +54,6 @@ jobs:
         id: deploy-to-webapp
         with:
           # Change this to your EXACT App Service name from the Azure Portal (case-sensitive)
-          app-name: 'CargoFive-RG_group'
+          app-name: 'CargoFive-RG'
+
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
