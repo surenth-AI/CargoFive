@@ -10,10 +10,12 @@ load_dotenv()
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 MODEL_NAME = "gemini-2.5-flash-lite"
 
+
 class MappingEngine:
     def __init__(self):
         self.model = genai.GenerativeModel(MODEL_NAME)
-        self.template_path = r"C:\Users\AxeGlobal Ai\Desktop\test ground\Template\Ouput template.xlsx"
+        self.template_path = os.path.join(os.path.dirname(__file__), "Template", "Ouput template.xlsx")
+
 
     def process_task(self, task, full_workbook_data):
         """Processes a specific task from the planner's schedule."""
