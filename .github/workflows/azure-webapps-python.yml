@@ -1,10 +1,13 @@
-name: Build and deploy Python app to Azure Web App - cargofive-hub
+name: Build and deploy Python app to Azure Web App
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build:
@@ -50,5 +53,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'cargofive-hub'
+          # Change this to your EXACT App Service name from the Azure Portal (case-sensitive)
+          app-name: 'CargoFive-RG_group'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
