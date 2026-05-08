@@ -150,32 +150,68 @@ def process_to_template():
             
         output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
         
-        # Deduplicate rows based on key fields to guarantee 100% unique output rows
+        # Deduplicate and merge rows based on core key fields to guarantee 100% unique output rows
         total_before = len(all_mapped_rows)
-        unique_rows = []
-        seen_signatures = set()
+        grouped_rows = {}
+        
+        # Standardize helper to clean and normalize prices
+        def clean_price(val):
+            if val is None: return ""
+            try:
+                # Keep digits only
+                clean_val = "".join(c for c in str(val) if c.isdigit())
+                return str(int(clean_val)) if clean_val else ""
+            except:
+                return ""
+
         for row in all_mapped_rows:
-            # Create a unique signature from key data fields
+            # Standardize ports (fallbacks)
+            origin = str(row.get("ORIGIN PORT") or row.get("ORIGIN LOCATION") or row.get("ORIGIN") or "").strip().upper()
+            dest = str(row.get("DESTINATION PORT") or row.get("DESTINATION LOCATION") or row.get("DESTINATION") or "").strip().upper()
+            
+            # Standardize dates to YYYY-MM-DD
+            start_date = str(row.get("START DATE") or "").split('T')[0].split(' ')[0].strip()
+            exp_date = str(row.get("EXPIRATION DATE") or "").split('T')[0].split(' ')[0].strip()
+            
             sig_fields = [
-                str(row.get("ORIGIN LOCATION", "")).strip().upper(),
-                str(row.get("DESTINATION LOCATION", "")).strip().upper(),
+                origin,
+                dest,
                 str(row.get("CHARGE", "")).strip().upper(),
                 str(row.get("PROVIDER", "")).strip().upper(),
-                str(row.get("START DATE", "")).strip(),
-                str(row.get("EXPIRATION DATE", "")).strip(),
-                str(row.get("20DRY", "")).strip(),
-                str(row.get("40DRY", "")).strip(),
-                str(row.get("40HDRY", "")).strip(),
-                str(row.get("45HDRY", "")).strip(),
-                str(row.get("REMARKS", "")).strip().upper(),
+                start_date,
+                exp_date,
+                clean_price(row.get("20DRY")),
+                clean_price(row.get("40DRY")),
+                clean_price(row.get("40HDRY")),
+                clean_price(row.get("45HDRY")),
             ]
             signature = "|".join(sig_fields)
-            if signature not in seen_signatures:
-                seen_signatures.add(signature)
-                unique_rows.append(row)
-        
-        all_mapped_rows = unique_rows
-        print(f"DEBUG: Deduplicated rows. Kept {len(all_mapped_rows)} unique rows from total {total_before} rows.")
+            
+            if signature not in grouped_rows:
+                grouped_rows[signature] = dict(row)
+            else:
+                existing_row = grouped_rows[signature]
+                
+                # Merge REMARKS cleanly
+                existing_remarks = str(existing_row.get("REMARKS") or "").strip()
+                new_remarks = str(row.get("REMARKS") or "").strip()
+                if new_remarks and new_remarks.upper() not in existing_remarks.upper():
+                    if existing_remarks:
+                        existing_row["REMARKS"] = f"{existing_remarks} | {new_remarks}"
+                    else:
+                        existing_row["REMARKS"] = new_remarks
+                
+                # Merge NOTES cleanly
+                existing_notes = str(existing_row.get("NOTES") or "").strip()
+                new_notes = str(row.get("NOTES") or "").strip()
+                if new_notes and new_notes.upper() not in existing_notes.upper():
+                    if existing_notes:
+                        existing_row["NOTES"] = f"{existing_notes} | {new_notes}"
+                    else:
+                        existing_row["NOTES"] = new_notes
+
+        all_mapped_rows = list(grouped_rows.values())
+        print(f"DEBUG: Deduplicated and merged rows. Kept {len(all_mapped_rows)} unique rows from total {total_before} rows.")
         
         success = mapping_engine.write_to_template(all_mapped_rows, output_path)
 

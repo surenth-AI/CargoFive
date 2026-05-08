@@ -8,6 +8,22 @@ load_dotenv()
 # Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 MODEL_NAME = "gemini-2.5-flash-lite"
+from datetime import datetime
+
+def log_debug_prompt(sheet_name, method_name, prompt):
+    try:
+        os.makedirs("debug_logs", exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        safe_sheet = "".join(c for c in str(sheet_name) if c.isalnum() or c in "._- ").strip()
+        safe_method = "".join(c for c in str(method_name) if c.isalnum() or c in "._- ").strip()
+        filename = f"debug_logs/{timestamp}_{safe_sheet}_{safe_method}.txt"
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(prompt)
+        print(f"[{datetime.now().isoformat()}] [LLM REQUEST] Sheet: '{sheet_name}' | Method: '{method_name}' | Saved to: {filename}")
+    except Exception as log_err:
+        print(f"Error logging prompt: {log_err}")
+
+
 
 class PlannerEngine:
     def __init__(self):
@@ -58,6 +74,7 @@ class PlannerEngine:
         """
 
         try:
+            log_debug_prompt("global", "generate_plan", prompt)
             response = self.model.generate_content(prompt)
             text = response.text
             if "```json" in text:

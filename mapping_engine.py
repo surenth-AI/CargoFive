@@ -10,6 +10,22 @@ load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"), transport="rest")
 MODEL_NAME = "gemini-2.5-flash-lite"
+from datetime import datetime
+
+def log_debug_prompt(sheet_name, method_name, prompt):
+    try:
+        os.makedirs("debug_logs", exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        safe_sheet = "".join(c for c in str(sheet_name) if c.isalnum() or c in "._- ").strip()
+        safe_method = "".join(c for c in str(method_name) if c.isalnum() or c in "._- ").strip()
+        filename = f"debug_logs/{timestamp}_{safe_sheet}_{safe_method}.txt"
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(prompt)
+        print(f"[{datetime.now().isoformat()}] [LLM REQUEST] Sheet: '{sheet_name}' | Method: '{method_name}' | Saved to: {filename}")
+    except Exception as log_err:
+        print(f"Error logging prompt: {log_err}")
+
+
 
 
 
@@ -178,7 +194,7 @@ class MappingEngine:
             formatted_tables_data += f"\nTable: {table.get('name', 'Unknown')}\n"
             headers = table.get('headers', [])
             formatted_tables_data += "Headers: " + " | ".join(str(h) for h in headers if h is not None) + "\n"
-            for row in table.get('data', [])[:30]:  # Give enough rows to inspect surcharges
+            for row in table.get('data', [])[:200]:  # Give enough rows to inspect surcharges
                 formatted_tables_data += " | ".join(str(cell) if cell is not None else "" for cell in row) + "\n"
 
         prompt = f"""
@@ -218,6 +234,7 @@ class MappingEngine:
         """
         
         try:
+            log_debug_prompt(sheet_name, "_extract_additional_surcharges", prompt)
             response = self.model.generate_content(prompt)
             text = response.text.strip()
             
@@ -253,7 +270,7 @@ class MappingEngine:
         context_rows = table.get('context', [])
         
         formatted_data = ""
-        for row in data_rows[:80]:
+        for row in data_rows[:300]:
             clean_row = [str(cell).strip() if cell is not None else "" for cell in row]
             while clean_row and clean_row[-1] == "":
                 clean_row.pop()
@@ -344,6 +361,7 @@ class MappingEngine:
         """
 
         try:
+            log_debug_prompt(sheet_name, f"_map_table_with_ai_{table.get('name', 'unknown')}", prompt)
             response = self.model.generate_content(prompt)
             text = response.text.strip()
             

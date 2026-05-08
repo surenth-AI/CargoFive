@@ -13,6 +13,22 @@ load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"), transport="rest")
 MODEL_NAME = "gemini-2.5-flash-lite"
+from datetime import datetime
+
+def log_debug_prompt(sheet_name, method_name, prompt):
+    try:
+        os.makedirs("debug_logs", exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        safe_sheet = "".join(c for c in str(sheet_name) if c.isalnum() or c in "._- ").strip()
+        safe_method = "".join(c for c in str(method_name) if c.isalnum() or c in "._- ").strip()
+        filename = f"debug_logs/{timestamp}_{safe_sheet}_{safe_method}.txt"
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(prompt)
+        print(f"[{datetime.now().isoformat()}] [LLM REQUEST] Sheet: '{sheet_name}' | Method: '{method_name}' | Saved to: {filename}")
+    except Exception as log_err:
+        print(f"Error logging prompt: {log_err}")
+
+
 
 
 
@@ -25,16 +41,22 @@ class DiscoveryEngine:
             workbook = openpyxl.load_workbook(file_path, data_only=True)
             results = {}
 
-            def process_single_sheet(sheet_name):
+            # Step 1: Read all sheets sequentially on the main thread (100% thread-safe openpyxl access)
+            extracted_sheets_data = {}
+            for name in workbook.sheetnames:
                 try:
-                    sheet = workbook[sheet_name]
-                    
-                    # 1. Map merged cells for consistent data extraction
+                    sheet = workbook[name]
                     merged_map = self._get_merged_cells_map(sheet)
-                    
-                    # 2. Extract structural data (with merged cells handled)
                     sheet_data = self._extract_sheet_data(sheet, merged_map)
-                    
+                    extracted_sheets_data[name] = sheet_data
+                except Exception as read_err:
+                    print(f"Error reading sheet '{name}' sequentially: {read_err}")
+                    extracted_sheets_data[name] = []
+
+            # Step 2: Run the AI calls concurrently across the pre-extracted data (completely thread-safe)
+            def process_single_sheet_ai(sheet_name):
+                try:
+                    sheet_data = extracted_sheets_data.get(sheet_name, [])
                     if not sheet_data:
                         return sheet_name, {
                             "metadata": {},
@@ -49,7 +71,7 @@ class DiscoveryEngine:
                         sheet_metadata = meta_future.result()
                         table_metadata = table_future.result()
                     
-                    # 5. Populate full data programmatically
+                    # Populate full data programmatically
                     tables = self._populate_table_data(table_metadata, sheet_data)
                     
                     return sheet_name, {
@@ -57,7 +79,7 @@ class DiscoveryEngine:
                         "tables": tables
                     }
                 except Exception as sheet_err:
-                    print(f"Error processing sheet '{sheet_name}' in parallel: {sheet_err}")
+                    print(f"Error processing sheet '{sheet_name}' in parallel AI: {sheet_err}")
                     return sheet_name, {
                         "metadata": {},
                         "tables": []
@@ -65,7 +87,7 @@ class DiscoveryEngine:
 
             sheet_names = workbook.sheetnames
             with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(process_single_sheet, name): name for name in sheet_names}
+                futures = {executor.submit(process_single_sheet_ai, name): name for name in sheet_names}
                 for future in futures:
                     name = futures[future]
                     try:
@@ -109,6 +131,7 @@ class DiscoveryEngine:
         Sheet Data Snippet:
         {json.dumps(data_rows[:200])}
         """
+        log_debug_prompt(sheet_name, "_get_sheet_metadata", prompt)
         attempts = 5
         for attempt in range(attempts):
             try:
@@ -196,13 +219,14 @@ class DiscoveryEngine:
         You are a world-class data structure specialist. I have an Excel sheet named '{sheet_name}'.
         
         Your task:
-        1. Find ALL distinct data tables in the provided data snippet.
-        2. Identify the EXACT boundaries (Excel range like A1:G2500).
-        3. Identify the logical headers for each table.
-        4. FIND TABLE NAME: Look for a title or name in the rows immediately ABOVE the table headers. 
-           - Mostly, tables have names like "Import Customer Service" or "Sales Report 2024".
-           - Use the actual name found in the sheet if present.
-           - ONLY if no name is found in the sheet, generate a highly relevant one.
+        1. Find ALL distinct data tables, structured grids, and ALSO any other crucial blocks of information in the provided data snippet. This includes:
+           - Standard shipping rate tables/grids.
+           - Text blocks containing general remarks, notes, or terms & conditions.
+           - Surcharge blocks or footnotes listing extra charges in text form (e.g. "VGM: 15 EUR", "BAF: 200 USD").
+           - Local charge grids or arbitrary trucking rate lists.
+        2. Identify the EXACT boundaries (Excel range like A1:G2500) for each table or block of information.
+        3. Identify the logical headers or key subjects for each table/block. If it's a text/notes block without column headers, use a generic list like ["Notes / Remarks"] as headers.
+        4. FIND TABLE/BLOCK NAME: Look for a title or name in the rows immediately ABOVE the table/block. Use the actual name found in the sheet if present. If no name is found, generate a highly descriptive name representing the block (e.g., "General Remarks & Surcharges", "Local Fees Note").
         5. Resolve Merged Cells: If a column is [MERGED], it belongs to the cell to its left.
         
         CRITICAL: DO NOT return the data rows. ONLY return the metadata. DO NOT include empty cells or null values in the JSON structure.
@@ -213,7 +237,7 @@ class DiscoveryEngine:
                 "range": "A1:G25",
                 "headers": ["POD", "20'", "40'"],
                 "table_name": "Actual Name from Sheet or Relevant Name",
-                "type": "Table Description",
+                "type": "Table Description (e.g., Rate Table, Surcharge Table, Notes Block, General Terms)",
                 "start_row": 1, 
                 "end_row": 25,
                 "start_col": "A",
@@ -222,9 +246,10 @@ class DiscoveryEngine:
         ]
 
         Sheet Data Snippet (with [MERGED] tokens):
-        {json.dumps(data_rows[:300], default=json_serial)} 
+        {json.dumps(data_rows[:1500], default=json_serial)} 
         """
 
+        log_debug_prompt(sheet_name, "_analyze_with_ai", prompt)
         attempts = 5
         for attempt in range(attempts):
             try:
