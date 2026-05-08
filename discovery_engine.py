@@ -64,7 +64,7 @@ class DiscoveryEngine:
                         }
 
                     # We run these two independent AI calls concurrently inside each sheet worker!
-                    with ThreadPoolExecutor(max_workers=2) as inner_executor:
+                    with ThreadPoolExecutor(max_workers=1) as inner_executor:
                         meta_future = inner_executor.submit(self._get_sheet_metadata, sheet_name, sheet_data)
                         table_future = inner_executor.submit(self._analyze_with_ai, sheet_name, sheet_data)
                         
@@ -86,7 +86,7 @@ class DiscoveryEngine:
                     }
 
             sheet_names = workbook.sheetnames
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 futures = {executor.submit(process_single_sheet_ai, name): name for name in sheet_names}
                 for future in futures:
                     name = futures[future]

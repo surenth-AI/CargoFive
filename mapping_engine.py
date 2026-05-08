@@ -133,7 +133,7 @@ class MappingEngine:
                 return []
 
         if relevant_tables:
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 futures = [executor.submit(process_single_table, t) for t in relevant_tables]
                 for future in futures:
                     try:

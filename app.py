@@ -131,7 +131,7 @@ def process_to_template():
         schedule = plan.get('schedule', [])
         
         all_mapped_rows = []
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=2) as executor:
             futures = [executor.submit(mapping_engine.process_task, task, workbook_data) for task in schedule]
             for future in futures:
                 try:
