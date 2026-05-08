@@ -122,29 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-
-            hideLoading();
+            const taskId = data.task_id;
             
-            // Create a temporary link to download the file
-            const a = document.createElement('a');
-            a.href = data.download_url;
-            a.download = `processed_${currentFilename}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            alert(`Successfully mapped ${data.row_count} rows to the template! Check your downloads.`);
-            
-            // Reload logs and dashboards in real-time
-            if (typeof loadUserHistory === 'function') loadUserHistory();
-            if (typeof loadLeadDashboard === 'function') loadLeadDashboard();
-            
-            // Reset mapping state
-            uploadCard.style.display = 'block';
-            resultsContainer.style.display = 'none';
-            workbookData = null;
-            currentFilename = null;
-            currentRunId = null;
+            // Start polling
+            pollTaskStatus(taskId);
 
         } catch (error) {
             console.error('Mapping failed:', error);
@@ -152,6 +133,48 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoading();
         }
     });
+
+    async function pollTaskStatus(taskId) {
+        try {
+            const response = await fetch(`/status/${taskId}`);
+            const data = await response.json();
+
+            if (data.status === 'processing') {
+                showLoading(`Processing... ${data.progress}% complete`);
+                setTimeout(() => pollTaskStatus(taskId), 2000);
+            } else if (data.status === 'completed') {
+                hideLoading();
+                const result = data.result;
+                
+                // Create a temporary link to download the file
+                const a = document.createElement('a');
+                a.href = result.download_url;
+                a.download = `processed_${currentFilename}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                alert(`Successfully mapped ${result.row_count} rows to the template! Check your downloads.`);
+                
+                // Reload logs and dashboards
+                if (typeof loadUserHistory === 'function') loadUserHistory();
+                if (typeof loadLeadDashboard === 'function') loadLeadDashboard();
+                
+                // Reset state
+                uploadCard.style.display = 'block';
+                resultsContainer.style.display = 'none';
+                workbookData = null;
+                currentFilename = null;
+                currentRunId = null;
+            } else if (data.status === 'failed') {
+                hideLoading();
+                alert('Mapping failed: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Polling failed:', error);
+            setTimeout(() => pollTaskStatus(taskId), 5000); // Retry after 5s
+        }
+    }
 
     function renderResults() {
         sheetTabs.innerHTML = '';

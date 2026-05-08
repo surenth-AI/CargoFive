@@ -1,5 +1,7 @@
 import os
 import io
+import threading
+import uuid
 from flask import Flask, render_template, request, jsonify, send_file, session, redirect, url_for
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -21,6 +23,9 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "super-secret-key-antigravity-123
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
+
+# --- Global Task Tracker for Background Processing ---
+processing_tasks = {}
 
 # --- Session Authentication Helper ---
 def is_logged_in():
@@ -123,122 +128,133 @@ def process_to_template():
     if not workbook_data:
         return jsonify({'error': 'No data to process'}), 400
         
-    start_time = datetime.now()
-    
-    try:
-        # 1. Generate strategic plan
-        plan = planner_engine.generate_plan(workbook_data)
-        schedule = plan.get('schedule', [])
-        
-        all_mapped_rows = []
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            futures = [executor.submit(mapping_engine.process_task, task, workbook_data) for task in schedule]
-            for future in futures:
+    task_id = str(uuid.uuid4())
+    processing_tasks[task_id] = {
+        'status': 'processing',
+        'progress': 0,
+        'result': None,
+        'error': None
+    }
+
+    def run_background_process(tid, w_data, o_filename, r_id):
+        try:
+            start_time = datetime.now()
+            
+            # 1. Generate strategic plan
+            plan = planner_engine.generate_plan(w_data)
+            schedule = plan.get('schedule', [])
+            
+            all_mapped_rows = []
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = [executor.submit(mapping_engine.process_task, task, w_data) for task in schedule]
+                for idx, future in enumerate(futures):
+                    try:
+                        mapped_rows = future.result()
+                        all_mapped_rows.extend(mapped_rows)
+                        # Update progress
+                        processing_tasks[tid]['progress'] = int(((idx + 1) / len(futures)) * 100)
+                    except Exception as task_error:
+                        print(f"Error processing task concurrently: {task_error}")
+
+            if not all_mapped_rows:
+                processing_tasks[tid]['status'] = 'failed'
+                processing_tasks[tid]['error'] = 'No relevant rate data found in tables'
+                return
+                
+            output_filename = f"processed_{o_filename}"
+            if not output_filename.endswith('.xlsx'):
+                output_filename += '.xlsx'
+                
+            output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
+            
+            # Deduplicate and merge rows based on core key fields
+            total_before = len(all_mapped_rows)
+            grouped_rows = {}
+            
+            def clean_price(val):
+                if val is None: return ""
                 try:
-                    mapped_rows = future.result()
-                    all_mapped_rows.extend(mapped_rows)
-                except Exception as task_error:
-                    print(f"Error processing task concurrently: {task_error}")
+                    clean_val = "".join(c for c in str(val) if c.isdigit())
+                    return str(int(clean_val)) if clean_val else ""
+                except:
+                    return ""
 
-            
-        if not all_mapped_rows:
-            return jsonify({'error': 'No relevant rate data found in tables'}), 404
-            
-        output_filename = f"processed_{original_filename}"
-        if not output_filename.endswith('.xlsx'):
-            output_filename += '.xlsx'
-            
-        output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_filename)
-        
-        # Deduplicate and merge rows based on core key fields to guarantee 100% unique output rows
-        total_before = len(all_mapped_rows)
-        grouped_rows = {}
-        
-        # Standardize helper to clean and normalize prices
-        def clean_price(val):
-            if val is None: return ""
-            try:
-                # Keep digits only
-                clean_val = "".join(c for c in str(val) if c.isdigit())
-                return str(int(clean_val)) if clean_val else ""
-            except:
-                return ""
+            for row in all_mapped_rows:
+                origin = str(row.get("ORIGIN PORT") or row.get("ORIGIN LOCATION") or row.get("ORIGIN") or "").strip().upper()
+                dest = str(row.get("DESTINATION PORT") or row.get("DESTINATION LOCATION") or row.get("DESTINATION") or "").strip().upper()
+                start_date = str(row.get("START DATE") or "").split('T')[0].split(' ')[0].strip()
+                exp_date = str(row.get("EXPIRATION DATE") or "").split('T')[0].split(' ')[0].strip()
+                
+                sig_fields = [
+                    origin, dest,
+                    str(row.get("CHARGE", "")).strip().upper(),
+                    str(row.get("PROVIDER", "")).strip().upper(),
+                    start_date, exp_date,
+                    clean_price(row.get("20DRY")),
+                    clean_price(row.get("40DRY")),
+                    clean_price(row.get("40HDRY")),
+                    clean_price(row.get("45HDRY")),
+                ]
+                signature = "|".join(sig_fields)
+                
+                if signature not in grouped_rows:
+                    grouped_rows[signature] = dict(row)
+                else:
+                    existing_row = grouped_rows[signature]
+                    existing_remarks = str(existing_row.get("REMARKS") or "").strip()
+                    new_remarks = str(row.get("REMARKS") or "").strip()
+                    if new_remarks and new_remarks.upper() not in existing_remarks.upper():
+                        existing_row["REMARKS"] = f"{existing_remarks} | {new_remarks}" if existing_remarks else new_remarks
+                    
+                    existing_notes = str(existing_row.get("NOTES") or "").strip()
+                    new_notes = str(row.get("NOTES") or "").strip()
+                    if new_notes and new_notes.upper() not in existing_notes.upper():
+                        existing_row["NOTES"] = f"{existing_notes} | {new_notes}" if existing_notes else new_notes
 
-        for row in all_mapped_rows:
-            # Standardize ports (fallbacks)
-            origin = str(row.get("ORIGIN PORT") or row.get("ORIGIN LOCATION") or row.get("ORIGIN") or "").strip().upper()
-            dest = str(row.get("DESTINATION PORT") or row.get("DESTINATION LOCATION") or row.get("DESTINATION") or "").strip().upper()
+            all_mapped_rows = list(grouped_rows.values())
+            success = mapping_engine.write_to_template(all_mapped_rows, output_path)
+
+            end_time = datetime.now()
+            system_duration_sec = int((end_time - start_time).total_seconds())
             
-            # Standardize dates to YYYY-MM-DD
-            start_date = str(row.get("START DATE") or "").split('T')[0].split(' ')[0].strip()
-            exp_date = str(row.get("EXPIRATION DATE") or "").split('T')[0].split(' ')[0].strip()
-            
-            sig_fields = [
-                origin,
-                dest,
-                str(row.get("CHARGE", "")).strip().upper(),
-                str(row.get("PROVIDER", "")).strip().upper(),
-                start_date,
-                exp_date,
-                clean_price(row.get("20DRY")),
-                clean_price(row.get("40DRY")),
-                clean_price(row.get("40HDRY")),
-                clean_price(row.get("45HDRY")),
-            ]
-            signature = "|".join(sig_fields)
-            
-            if signature not in grouped_rows:
-                grouped_rows[signature] = dict(row)
+            if success:
+                if r_id:
+                    db.complete_file_run(r_id, system_duration_sec)
+                
+                processing_tasks[tid]['status'] = 'completed'
+                processing_tasks[tid]['result'] = {
+                    'download_url': f'/download/{output_filename}',
+                    'row_count': len(all_mapped_rows),
+                    'system_duration_sec': system_duration_sec
+                }
             else:
-                existing_row = grouped_rows[signature]
+                processing_tasks[tid]['status'] = 'failed'
+                processing_tasks[tid]['error'] = 'Failed to write to template'
                 
-                # Merge REMARKS cleanly
-                existing_remarks = str(existing_row.get("REMARKS") or "").strip()
-                new_remarks = str(row.get("REMARKS") or "").strip()
-                if new_remarks and new_remarks.upper() not in existing_remarks.upper():
-                    if existing_remarks:
-                        existing_row["REMARKS"] = f"{existing_remarks} | {new_remarks}"
-                    else:
-                        existing_row["REMARKS"] = new_remarks
-                
-                # Merge NOTES cleanly
-                existing_notes = str(existing_row.get("NOTES") or "").strip()
-                new_notes = str(row.get("NOTES") or "").strip()
-                if new_notes and new_notes.upper() not in existing_notes.upper():
-                    if existing_notes:
-                        existing_row["NOTES"] = f"{existing_notes} | {new_notes}"
-                    else:
-                        existing_row["NOTES"] = new_notes
+        except Exception as e:
+            import traceback
+            print(f"Processing error: {e}")
+            print(traceback.format_exc())
+            processing_tasks[tid]['status'] = 'failed'
+            processing_tasks[tid]['error'] = str(e)
 
-        all_mapped_rows = list(grouped_rows.values())
-        print(f"DEBUG: Deduplicated and merged rows. Kept {len(all_mapped_rows)} unique rows from total {total_before} rows.")
-        
-        success = mapping_engine.write_to_template(all_mapped_rows, output_path)
+    # Start the thread
+    thread = threading.Thread(target=run_background_process, args=(task_id, workbook_data, original_filename, run_id))
+    thread.daemon = True
+    thread.start()
 
+    return jsonify({'task_id': task_id})
+
+@app.route('/status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    if not is_logged_in():
+        return jsonify({'error': 'Unauthorized'}), 401
         
-        # Calculate system duration
-        end_time = datetime.now()
-        system_duration_sec = int((end_time - start_time).total_seconds())
+    task = processing_tasks.get(task_id)
+    if not task:
+        return jsonify({'error': 'Task not found'}), 404
         
-        if success:
-            # Complete the run tracking in database
-            if run_id:
-                db.complete_file_run(run_id, system_duration_sec)
-                
-            return jsonify({
-                'message': 'Success',
-                'download_url': f'/download/{output_filename}',
-                'row_count': len(all_mapped_rows),
-                'system_duration_sec': system_duration_sec
-            })
-        else:
-            return jsonify({'error': 'Failed to write to template'}), 500
-            
-    except Exception as e:
-        import traceback
-        print(f"Processing error: {e}")
-        print(traceback.format_exc())
-        return jsonify({'error': str(e)}), 500
+    return jsonify(task)
 
 
 # --- Update Manual Balance Time ---
