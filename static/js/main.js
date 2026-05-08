@@ -100,13 +100,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            const data = await response.json();
-
-            if (data.error) {
-                alert(data.error);
+            if (!response.ok) {
+                let errorMsg = `Server error (${response.status})`;
+                try {
+                    const errData = await response.json();
+                    if (errData && errData.error) {
+                        errorMsg = errData.error;
+                    }
+                } catch (e) {
+                    try {
+                        const text = await response.text();
+                        if (text && text.includes('<title>')) {
+                            const title = text.split('<title>')[1].split('</title>')[0];
+                            errorMsg += `: ${title}`;
+                        }
+                    } catch (textErr) {}
+                }
+                alert(errorMsg);
                 hideLoading();
                 return;
             }
+
+            const data = await response.json();
 
             hideLoading();
             
@@ -133,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Mapping failed:', error);
-            alert('An error occurred during template mapping.');
+            alert('An error occurred during template mapping. Connection was lost or timed out. Details: ' + error.message);
             hideLoading();
         }
     });
